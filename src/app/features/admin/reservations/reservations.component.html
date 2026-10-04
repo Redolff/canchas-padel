@@ -1,0 +1,242 @@
+<!-- ── MOBILE RESERVATIONS VIEW ───────────────────────────────── -->
+<div class="res-mobile mobile-only pc-root">
+
+  <!-- Mobile topbar -->
+  <div class="res-mobile__topbar">
+    <div class="res-mobile__topbar-titles">
+      <div class="res-mobile__topbar-title pc-display">Reservas</div>
+      <div class="res-mobile__topbar-sub">{{ topbarSubtitle() }}</div>
+    </div>
+    <button class="res-mobile__topbar-btn pc-btn pc-btn-primary" (click)="openNewReservationModal()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round">
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Search -->
+  <div class="res-mobile__search">
+    <div class="res-mobile__search-box">
+      <app-icon name="search" [size]="15" color="var(--pc-muted)" />
+      <input class="res-mobile__search-input" type="text" placeholder="Buscar por nombre, cancha o PD-…"
+        [value]="searchQuery()" (input)="onSearch($event)" />
+    </div>
+  </div>
+
+  <!-- Filter chips -->
+  <div class="res-mobile__chips">
+    @for (tab of filterTabs(); track tab.key) {
+    <div class="res-mobile__chip" [class.res-mobile__chip--active]="activeTab() === tab.key" (click)="setTab(tab.key)">
+      {{ tab.label }}
+      <span class="res-mobile__chip-count">{{ tab.count }}</span>
+    </div>
+    }
+  </div>
+
+  <!-- Grouped list -->
+  <div class="res-mobile__list">
+    @for (group of groupedMobileRows(); track group.label) {
+    <div class="res-mobile__group-head">
+      <span>{{ group.label }}</span>
+      <span class="pc-mono res-mobile__group-count">{{ group.rows.length }} reservas</span>
+    </div>
+
+    @for (r of group.rows; track r.id) {
+    <div class="res-mobile__card pc-row" (click)="openDetail(r, $event)">
+      <!-- Time column -->
+      <div class="res-mobile__card-time">
+        <div class="pc-mono res-mobile__card-start">{{ mobileStartTime(r) }}</div>
+        <div class="pc-mono res-mobile__card-end">{{ mobileEndTime(r) }}</div>
+      </div>
+      <div class="res-mobile__card-divider"></div>
+      <!-- Court + host -->
+      <div class="res-mobile__card-info">
+        <div class="res-mobile__card-court">
+          <span>{{ r.courtName }}</span>
+          <span class="pc-dot" style="background: var(--pc-line)"></span>
+          <span class="res-mobile__card-players">{{ r.playersLabel }}</span>
+          @if (r.isOpen) {
+          <span class="res-mobile__open-tag">OPEN</span>
+          }
+        </div>
+        <div class="res-mobile__card-host">
+          <app-avatar [name]="r.clientName || '?'" [size]="20" />
+          <span>{{ r.clientName || '—' }}</span>
+          <p class="booking-type" [class.booking-type--private]="r.type === 'private'"
+            [class.booking-type--open]="r.type === 'open'" [class.booking-type--lesson]="r.type === 'lesson'"
+            [class.booking-type--maintenance]="r.type === 'maintenance'">
+            {{ bookingTypeLabels[r.type] || '-' }}
+        </p>
+        </div>
+      </div>
+      <!-- Status badge -->
+      <div class="res-mobile__card-right">
+        @if (r.type === 'private' || r.type === 'open') {
+        <span class="pc-badge" [style.background]="r.statusStyle.bg" [style.color]="r.statusStyle.fg"
+          style="font-size: 9px">
+          <span class="pc-dot" [style.background]="r.statusStyle.dot"></span>
+          {{ statusLabels[r.status] }}
+        </span>
+        }
+      </div>
+    </div>
+    }
+
+    <div style="height: 8px"></div>
+    }
+
+    @if (rows().length === 0) {
+    <div class="res-mobile__empty">Ninguna reserva coincide con tu filtro.</div>
+    }
+
+    <!-- Mobile pagination -->
+    @if (totalPages() > 1) {
+    <div class="res-mobile__pagination">
+      <span class="res-mobile__pagination-info">{{ showingInfo() }}</span>
+      <div class="res-mobile__pagination-pages">
+        @for (p of pageNumbers(); track $index) {
+        @if (p === '…') {
+        <span class="res-page-ellipsis">…</span>
+        } @else {
+        <button class="res-mobile__page-btn" [class.res-mobile__page-btn--active]="currentPage() === p"
+          (click)="goToPage(+p)">{{ p }}</button>
+        }
+        }
+      </div>
+    </div>
+    }
+  </div>
+</div>
+
+@if (selectedRes()) {
+<app-reservation-detail
+  [reservation]="selectedRes()!"
+  (close)="closeDetail()"
+  (edit)="openEditModal()"
+  (markPaid)="markAsPaid()"
+  (markRefunded)="markAsRefunded()"
+  (deleteSeries)="deleteSelectedSeries()"
+  (delete)="deleteSelectedReservation()" />
+}
+
+<!-- ── DESKTOP RESERVATIONS VIEW ──────────────────────────────── -->
+<app-topbar class="desktop-only" title="Reservas" [subtitle]="topbarSubtitle()">
+  <div class="res-search">
+    <app-icon name="search" [size]="14" color="var(--pc-muted)" />
+    <input class="res-search__input" type="text" placeholder="Buscar reserva, cliente…" [value]="searchQuery()"
+      (input)="onSearch($event)" />
+  </div>
+  <button class="pc-btn pc-btn-primary" (click)="openNewReservationModal()">
+    <app-icon name="plus" [size]="14" color="var(--pc-accent)" /> Nueva reserva
+  </button>
+</app-topbar>
+
+<!-- Filter tabs -->
+<div class="res-tabs desktop-only">
+  @for (tab of filterTabs(); track tab.key) {
+  <div class="res-tab" [class.res-tab--active]="activeTab() === tab.key" (click)="setTab(tab.key)">
+    {{ tab.label }}
+    <span class="res-tab__count">{{ tab.count }}</span>
+  </div>
+  }
+  <div class="res-tabs__spacer"></div>
+<!--  <div class="pc-chip res-chip-outline">-->
+<!--    <app-icon name="calendar" [size]="12" /> Esta semana-->
+<!--  </div>-->
+<!--  <div class="pc-chip res-chip-outline">-->
+<!--    <app-icon name="filter" [size]="12" /> Filtros-->
+<!--  </div>-->
+</div>
+
+<!-- Table -->
+<div class="res-scroll desktop-only">
+  <div class="res-table-wrap">
+
+    <!-- Header -->
+    <div class="res-table-head">
+      <div>Reserva</div>
+      <div>Cuándo</div>
+      <div>Cancha</div>
+      <div>Cliente</div>
+      <div>Jugadores</div>
+      <div>Total</div>
+      <div>Estado</div>
+      <div></div>
+    </div>
+
+    <!-- Rows -->
+    @for (r of rows(); track r.id; let last = $last) {
+    <div class="res-row" [class.res-row--last]="last" [class.res-row--selected]="selectedRes()?.id === r.id"
+      (click)="openDetail(r, $event)">
+      <div class="res-id pc-mono">{{ r.bookingRef }}</div>
+      <div class="res-when">{{ r.whenLabel }}</div>
+      <div class="res-court">
+        <div class="res-court__art">
+          <app-court-art [width]="30" [height]="18" [surface]="r.courtSurface" [showBall]="false" />
+        </div>
+        {{ r.courtName }}
+      </div>
+      <div class="res-customer">
+        <app-avatar [name]="r.clientName || '?'" [size]="28" />
+        <div class="res-customer__info">
+          <div class="res-customer__name">{{ r.clientName || '—' }}</div>
+          <div class="res-customer__email">{{ r.clientPhone || '' }}</div>
+        </div>
+        <span class="booking-type" [class.booking-type--private]="r.type === 'private'"
+          [class.booking-type--open]="r.type === 'open'" [class.booking-type--lesson]="r.type === 'lesson'"
+          [class.booking-type--maintenance]="r.type === 'maintenance'">
+          {{ bookingTypeLabels[r.type] || '-' }}
+        </span>
+      </div>
+      <div class="res-players">
+        <span class="pc-mono res-players__val">{{ r.playersLabel }}</span>
+        @if (r.isOpen) {
+        <span class="pc-badge res-badge--open">OPEN</span>
+        }
+        @if (r.recurringId) {
+        <span class="pc-badge res-badge--recurring">↻</span>
+        }
+      </div>
+      <div class="pc-mono res-total">{{ r.totalLabel }}</div>
+      <div class="res-status">
+        @if (r.type === 'private' || r.type === 'open') {
+        <span class="pc-badge" [style.background]="r.statusStyle.bg" [style.color]="r.statusStyle.fg">
+          <span class="pc-dot" [style.background]="r.statusStyle.dot"></span>
+          {{ statusLabels[r.status] }}
+        </span>
+        }
+      </div>
+      <div class="res-dots">
+        <app-icon name="dots" [size]="14" color="var(--pc-muted)" />
+      </div>
+    </div>
+    }
+
+    @if (rows().length === 0) {
+    <div class="res-empty">Ninguna reserva coincide con tu filtro.</div>
+    }
+
+  </div>
+
+  <!-- Pagination -->
+  <div class="res-pagination">
+    <span class="res-pagination__info">{{ showingInfo() }}</span>
+    <div class="res-pagination__pages">
+      @for (p of pageNumbers(); track $index) {
+      @if (p === '…') {
+      <span class="res-page-ellipsis">…</span>
+      } @else {
+      <button class="res-page-btn" [class.res-page-btn--active]="currentPage() === p" (click)="goToPage(+p)">{{ p
+        }}</button>
+      }
+      }
+    </div>
+  </div>
+</div>
+
+<!-- New / Edit booking modal -->
+@if (showModal()) {
+<app-booking-modal [preset]="modalPreset()" [courts]="courts" [error]="modalError()" [defaultPrice]="defaultSlotPrice()" (save)="onModalSave($event)"
+  (cancel)="closeModal()" />
+}

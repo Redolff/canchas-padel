@@ -1,0 +1,6 @@
+vendor/
+storage/db/
+bootstrap/cache/
+.env
+.git/
+tests/

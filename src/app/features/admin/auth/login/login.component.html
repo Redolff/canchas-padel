@@ -1,0 +1,263 @@
+<!-- ── MOBILE LOGIN ─────────────────────────────────────────────── -->
+<div class="login-mobile mobile-only pc-root">
+
+  <!-- Dark top section -->
+  <div class="login-mobile__top">
+    <div class="login-mobile__court-deco" aria-hidden="true">
+      <app-court-art [width]="380" [height]="190" surface="turf" [showBall]="false" />
+    </div>
+
+    <div class="login-mobile__logo">
+      <div class="login-mobile__logo-badge">CP</div>
+      <div>
+        <div class="login-mobile__logo-name pc-display">Club Pro</div>
+        <div class="login-mobile__logo-sub">Consola de manager</div>
+      </div>
+    </div>
+
+    <div class="login-mobile__hero">
+      <div class="login-mobile__live-pill">
+        <span class="login-mobile__live-dot pc-pulse"></span>
+        LIVE
+      </div>
+      <h1 class="login-mobile__headline pc-display">
+        Gestioná el club<br>desde tu <span class="login-mobile__headline-accent">bolsillo.</span>
+      </h1>
+    </div>
+  </div>
+
+  <!-- Bottom form sheet -->
+  <div class="login-mobile__sheet">
+    <div class="login-mobile__sheet-eyebrow">Acceso de manager</div>
+    <h2 class="login-mobile__sheet-heading pc-display">Bienvenido</h2>
+
+    <form [formGroup]="form" (ngSubmit)="signIn()" class="login-mobile__fields">
+
+      <div>
+        <label class="login__field-label">Email de trabajo</label>
+        <div class="login__input-box" [class.login__input-box--error]="submitted() && form.controls.email.invalid">
+          <app-icon name="user" [size]="15" color="var(--pc-muted)" />
+          <input class="login__input" formControlName="email" type="email"
+                 placeholder="Email de trabajo" autocomplete="email" />
+        </div>
+        @if (submitted() && form.controls.email.errors?.['required']) {
+          <div class="login__field-error">El email es obligatorio.</div>
+        }
+        @if (submitted() && form.controls.email.errors?.['email']) {
+          <div class="login__field-error">Ingresá un email válido.</div>
+        }
+      </div>
+
+      <div>
+        <div class="login__field-label-row">
+          <label class="login__field-label" style="margin-bottom: 0">Contraseña</label>
+<!--          <button type="button" class="login__forgot">¿Olvidaste?</button>-->
+        </div>
+        <div class="login__input-box" [class.login__input-box--error]="submitted() && form.controls.password.invalid">
+          <app-icon name="lock" [size]="15" color="var(--pc-muted)" />
+          <input class="login__input" formControlName="password"
+                 [type]="showPassword() ? 'text' : 'password'"
+                 placeholder="Contraseña" autocomplete="current-password" />
+          <button type="button" class="login__eye-btn" (click)="togglePassword()">
+            <app-icon name="eye" [size]="16" color="var(--pc-muted)" />
+          </button>
+        </div>
+        @if (submitted() && form.controls.password.errors?.['required']) {
+          <div class="login__field-error">La contraseña es obligatoria.</div>
+        }
+        @if (submitted() && form.controls.password.errors?.['minlength']) {
+          <div class="login__field-error">La contraseña debe tener al menos 6 caracteres.</div>
+        }
+      </div>
+
+      @if (loginError()) {
+        <div class="login__error-banner">{{ loginError() }}</div>
+      }
+
+      <button type="submit" class="pc-btn pc-btn-primary login__submit" [disabled]="loading()">
+        <span>{{ loading() ? 'Ingresando…' : 'Ingresar a la consola' }}</span>
+        @if (!loading()) {
+          <app-icon name="arrow" [size]="16" color="var(--pc-accent)" />
+        }
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- ── DESKTOP LOGIN ────────────────────────────────────────────── -->
+<div class="login pc-root desktop-only">
+
+  <!-- ── LEFT: Brand panel ─────────────────────────────────── -->
+  <div class="login__brand">
+
+    <!-- Decorative court illustration -->
+    <div class="login__court-deco">
+      <app-court-art [width]="520" [height]="260" surface="turf" [showBall]="false" />
+    </div>
+
+    <!-- Decorative dot grid -->
+    <svg width="240" height="240" viewBox="0 0 240 240" class="login__dots" aria-hidden="true">
+      @for (row of dotRows; track row) {
+        @for (col of dotCols; track col) {
+          <circle
+            [attr.cx]="20 + col * 18"
+            [attr.cy]="20 + row * 18"
+            r="1.4"
+            fill="var(--pc-accent)"
+          />
+        }
+      }
+    </svg>
+
+    <!-- Logo -->
+    <div class="login__logo">
+      <div class="login__logo-badge">CP</div>
+      <div>
+        <div class="login__logo-name pc-display">Club Pro</div>
+        <div class="login__logo-sub">Consola de manager</div>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="login__hero">
+      <div class="login__live-badge">
+        <span class="login__live-dot pc-pulse"></span> LIVE
+      </div>
+
+      <h1 class="login__headline pc-display">
+        Gestioná un club ocupado.<br>
+        <span class="login__headline-accent">Sin esfuerzo.</span>
+      </h1>
+
+      <p class="login__subtext">
+        Ingresá para gestionar canchas, reservas y jugadores en tus canchas en tiempo real.
+      </p>
+
+      <!-- Mini stats -->
+<!--      <div class="login__stats">-->
+<!--        @for (stat of stats; track stat.label) {-->
+<!--          <div class="login__stat-tile">-->
+<!--            <div class="login__stat-label">{{ stat.label }}</div>-->
+<!--            <div-->
+<!--              class="login__stat-value"-->
+<!--              [class.login__stat-value&#45;&#45;mono]="stat.mono"-->
+<!--              [class.login__stat-value&#45;&#45;display]="!stat.mono"-->
+<!--            >{{ stat.value }}</div>-->
+<!--            @if (stat.sub) {-->
+<!--              <div class="login__stat-sub">{{ stat.sub }}</div>-->
+<!--            }-->
+<!--          </div>-->
+<!--        }-->
+<!--      </div>-->
+    </div>
+
+    <!-- Footer -->
+    <div class="login__footer">
+      <span>© 2026 Club Pro · v3.4.1</span>
+      <div class="login__footer-links">
+        <span>Estado</span>
+        <span>Privacidad</span>
+        <span>Ayuda</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: Form panel ──────────────────────────────────── -->
+  <div class="login__form-panel">
+
+    <!-- Top-right helper -->
+    <div class="login__demo-row">
+      ¿Nuevo en Club Pro?
+      <a type="tel" href="tel:+542235812958"  class="pc-btn pc-btn-ghost login__demo-btn">Solicitar una demo</a>
+    </div>
+
+    <!-- Centered form content -->
+    <div class="login__form-content">
+
+      <div class="login__form-eyebrow">Acceso de manager</div>
+      <h2 class="login__form-heading pc-display">Bienvenido</h2>
+      <p class="login__form-sub">Ingresá con tu cuenta de manager para abrir la consola.</p>
+
+      <form [formGroup]="form" (ngSubmit)="signIn()" class="login__fields">
+
+        <!-- Email -->
+        <div>
+          <label class="login__field-label">Email de trabajo</label>
+          <div class="login__input-box" [class.login__input-box--error]="submitted() && form.controls.email.invalid">
+            <app-icon name="user" [size]="15" color="var(--pc-muted)" />
+            <input class="login__input" formControlName="email" type="email"
+                   placeholder="Email de trabajo" autocomplete="email" />
+          </div>
+          @if (submitted() && form.controls.email.errors?.['required']) {
+            <div class="login__field-error">El email es obligatorio.</div>
+          }
+          @if (submitted() && form.controls.email.errors?.['email']) {
+            <div class="login__field-error">Ingresá un email válido.</div>
+          }
+        </div>
+
+        <!-- Password -->
+        <div>
+          <div class="login__field-label-row">
+            <label class="login__field-label" style="margin-bottom: 0">Contraseña</label>
+<!--            <button type="button" class="login__forgot">¿Olvidaste?</button>-->
+          </div>
+          <div class="login__input-box" [class.login__input-box--error]="submitted() && form.controls.password.invalid">
+            <app-icon name="lock" [size]="15" color="var(--pc-muted)" />
+            <input class="login__input" formControlName="password"
+                   [type]="showPassword() ? 'text' : 'password'"
+                   placeholder="Contraseña" autocomplete="current-password" />
+            <button type="button" class="login__eye-btn" (click)="togglePassword()">
+              <app-icon name="eye" [size]="16" color="var(--pc-muted)" />
+            </button>
+          </div>
+          @if (submitted() && form.controls.password.errors?.['required']) {
+            <div class="login__field-error">La contraseña es obligatoria.</div>
+          }
+          @if (submitted() && form.controls.password.errors?.['minlength']) {
+            <div class="login__field-error">La contraseña debe tener al menos 6 caracteres.</div>
+          }
+        </div>
+
+        <!-- Remember me + 2FA -->
+<!--        <div class="login__options-row">-->
+<!--          <label class="login__remember">-->
+<!--            <span class="login__checkbox">-->
+<!--              <app-icon name="check" [size]="11" color="var(&#45;&#45;pc-accent)" />-->
+<!--            </span>-->
+<!--            Mantenerme conectado en este dispositivo-->
+<!--          </label>-->
+<!--          <div class="login__twofa">-->
+<!--            <app-icon name="shield" [size]="11" color="var(&#45;&#45;pc-muted)" />-->
+<!--            2FA · ACTIVADO-->
+<!--          </div>-->
+<!--        </div>-->
+
+        <!-- Login error -->
+        @if (loginError()) {
+          <div class="login__error-banner">{{ loginError() }}</div>
+        }
+
+        <!-- Submit -->
+        <button type="submit" class="pc-btn pc-btn-primary login__submit" [disabled]="loading()">
+          <span>{{ loading() ? 'Ingresando…' : 'Ingresar a la consola' }}</span>
+          @if (!loading()) {
+            <app-icon name="arrow" [size]="16" color="var(--pc-accent)" />
+          }
+        </button>
+
+        <!-- Player app hint -->
+        <div class="login__info-box">
+          <app-icon name="info" [size]="14" color="var(--pc-muted)" />
+          <div>
+            ¿Buscás la app de jugadores?
+<!--              <span class="login__info-link">Proximamente</span>-->
+              <span class="">Proximamente</span>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>

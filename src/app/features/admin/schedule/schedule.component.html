@@ -1,0 +1,300 @@
+<app-topbar class="sc-topbar" title="Horario" [subtitle]="topbarSubtitle()">
+  <div class="sc-datenav">
+    <button class="sc-datenav__btn" (click)="goToPrevDay()">
+      <app-icon name="chevron-left" [size]="14" color="var(--pc-ink)" />
+    </button>
+    <span class="sc-datenav__label">{{ displayDateLabel() }}</span>
+    <button class="sc-datenav__btn" (click)="goToNextDay()">
+      <app-icon name="chevron-right" [size]="14" color="var(--pc-ink)" />
+    </button>
+  </div>
+  @if (!isToday()) {
+  <div class="pc-chip sc-today-chip" (click)="goToToday()">Hoy</div>
+  }
+  <button class="pc-btn pc-btn-primary" (click)="openNewBookingModal()">
+    <app-icon name="plus" [size]="14" color="var(--pc-accent)" /> Nueva reserva
+  </button>
+</app-topbar>
+
+<!-- Filter bar -->
+<div class="sc-filters">
+  <span class="sc-filters__label">Filtrar:</span>
+  @for (chip of filterChips; track chip) {
+  <div class="pc-chip sc-filter-chip" [class.sc-filter-chip--active]="activeFilter() === chip"
+    (click)="activeFilter.set(chip)">
+    {{ chip }}
+  </div>
+  }
+  <div class="sc-filters__spacer"></div>
+  <div class="sc-legend">
+    <span class="sc-legend__item"><span class="sc-legend__dot" style="background:var(--pc-primary)"></span>
+      Privado</span>
+    <span class="sc-legend__item"><span class="sc-legend__dot" style="background:var(--pc-accent)"></span> Partido
+      abierto</span>
+    <span class="sc-legend__item"><span class="sc-legend__dot" style="background:#2a6fb5"></span> Clase</span>
+    <span class="sc-legend__item"><span class="sc-legend__dot sc-legend__dot--maint"></span> Mantenimiento</span>
+  </div>
+</div>
+
+@if (activeFilter() !== 'Disponibles') {
+<div class="sc-mobile-list">
+  @for (court of visibleCourts(); track court.id) {
+  <section class="sc-mobile-court" [class.sc-mobile-court--open]="isCourtExpanded(court.id)">
+    <button class="sc-mobile-court__head" type="button" (click)="toggleCourt(court.id)">
+      <div>
+        <strong>{{ courtLabel(court.id) }}</strong>
+        <span>{{ (bookingsVMMap().get(court.id) ?? []).length }} turnos · {{ court.location === 'Indoor' ? 'Interior' :
+          'Exterior' }}</span>
+      </div>
+      <span class="sc-mobile-court__chevron">{{ isCourtExpanded(court.id) ? '▲' : '▼' }}</span>
+    </button>
+
+    @if (isCourtExpanded(court.id)) {
+    @for (b of (bookingsVMMap().get(court.id) ?? []); track b.id) {
+    <article class="sc-mobile-booking" [style.background]="b.bg" [style.color]="b.fg" (click)="openDetail(b, $event)">
+      <div class="sc-mobile-booking__main">
+        <div class="sc-mobile-booking__name">{{ b.clientName || '—' }}</div>
+        <div class="sc-mobile-booking__time pc-mono">
+          {{ b.timeLabel }}
+          @if (b.type === 'open') { <span>&nbsp;· ABIERTO</span> }
+        </div>
+      </div>
+      <div class="sc-mobile-booking__badges">
+        @if (b.recurringId) {
+        <span class="sc-mobile-booking__recurring">↻</span>
+        }
+        @if (b.type !== 'maintenance') {
+        <span class="sc-mobile-booking__players" [style.background]="b.playersBadgeBg">{{ b.players }}/4</span>
+        }
+      </div>
+    </article>
+    } @empty {
+    <button class="sc-mobile-empty" type="button" (click)="openNewBookingFromCell(court.id, 0)">
+      Sin turnos · agregar reserva
+    </button>
+    }
+    }
+  </section>
+  }
+</div>
+}
+
+<!-- Desktop disponibles -->
+@if (activeFilter() === 'Disponibles') {
+<div class="sc-available-grid sc-desktop-only">
+  @for (court of visibleCourts(); track court.id) {
+  <div class="sc-available-row">
+    <div class="sc-available-row__court">
+      <app-court-art [width]="30" [height]="18" [surface]="court.surface" [showBall]="false">
+      </app-court-art>
+      <div>
+        <strong>{{ courtLabel(court.id) }}</strong>
+        <span>
+          {{
+          court.location === 'Indoor'
+          ? 'Interior'
+          : 'Exterior'
+          }}
+        </span>
+      </div>
+    </div>
+    <div class="sc-available-row__slots">
+
+      @for (
+      slot of (
+      isAvailableExpanded(court.id)
+      ? getAvailableSlots(court.id)
+      : getAvailableSlots(court.id).slice(0, 4)
+      );
+      track slot.start
+      ) {
+
+      <button class="sc-slot-chip" (click)="openAvailableSlot(court.id, slot)">
+        {{ slot.label }}
+      </button>
+
+      }
+
+      @if (getAvailableSlots(court.id).length > 4) {
+
+      <button class="sc-show-more" (click)="toggleAvailableSlots(court.id)">
+
+        @if (!isAvailableExpanded(court.id)) {
+        + {{ getAvailableSlots(court.id).length - 4 }} horarios más
+        } @else {
+        Ver menos
+        }
+
+      </button>
+
+      }
+
+    </div>
+  </div>
+  }
+</div>
+}
+
+<!-- Mobile disponbiles -->
+@if (activeFilter() === 'Disponibles') {
+<div class="sc-mobile-list sc-mobile-available sc-mobile-only">
+  @for (court of visibleCourts(); track court.id) {
+  <section class="sc-mobile-court" [class.sc-mobile-court--open]="isCourtExpanded(court.id)">
+    <button class="sc-mobile-court__head" type="button" (click)="toggleCourt(court.id)">
+      <div>
+        <strong>{{ courtLabel(court.id) }}</strong>
+        <span>
+          {{ getAvailableSlots(court.id).length }}
+          horarios disponibles
+        </span>
+      </div>
+      <span class="sc-mobile-court__chevron">
+        {{ isCourtExpanded(court.id) ? '▲' : '▼' }}
+      </span>
+    </button>
+    @if (isCourtExpanded(court.id)) {
+    <div class="sc-mobile-available-slots">
+      @for (slot of getAvailableSlots(court.id); track slot.start) {
+      <button class="sc-slot-chip" (click)="openAvailableSlot(court.id, slot)">
+        {{ slot.label }}
+      </button>
+      } @empty {
+      <div class="sc-no-slots">
+        Sin disponibilidad
+      </div>
+      }
+    </div>
+    }
+  </section>
+  }
+</div>
+}
+
+<!-- Timetable -->
+@if (activeFilter() !== 'Disponibles') {
+<div class="sc-scroll sc-desktop-only">
+  <div class="sc-inner">
+
+    <!-- Hour ruler -->
+    <div class="sc-ruler">
+      <div class="sc-ruler__spacer" [style.width.px]="LABEL_W + 6"></div>
+      @for (h of hours; track h) {
+      <div class="sc-ruler__cell" [style.width.px]="COL_W">{{ h }}:00</div>
+      }
+    </div>
+
+    <!-- Court rows -->
+    @for (court of visibleCourts(); track court.id; let ci = $index) {
+    <div class="sc-row">
+
+      <!-- Label -->
+      <div class="sc-label" [style.width.px]="LABEL_W">
+        <div class="sc-label__art">
+          <app-court-art [width]="30" [height]="18" [surface]="court.surface" [showBall]="false" />
+        </div>
+        <div class="sc-label__info">
+          <div class="sc-label__name">{{ courtLabel(court.id) }}</div>
+          <div class="sc-label__sub">{{ court.location === 'Indoor' ? 'Interior' : 'Exterior' }}</div>
+        </div>
+      </div>
+
+      <!-- Track -->
+      <div class="sc-track" [style.width.px]="TRACK_W()" [style.height.px]="ROW_H">
+
+        <!-- Background cells -->
+        @for (h of hours; track h; let hi = $index) {
+        <div class="sc-cell" [style.left.px]="hi * COL_W" [style.width.px]="COL_W" [style.height.px]="ROW_H"
+          [class.sc-cell--first]="hi === 0" [class.sc-cell--last]="hi === hours.length - 1"
+          (click)="openNewBookingFromCell(court.id, hi)">
+        </div>
+        }
+
+        <!-- Half-hour dashes -->
+        @for (h of hours; track h; let hi = $index) {
+        <div class="sc-half" [style.left.px]="hi * COL_W + COL_W / 2"></div>
+        }
+
+        <!-- Booking blocks -->
+        @for (b of (bookingsVMMap().get(court.id) ?? []); track b.id) {
+        <div class="sc-block" [style.left.px]="b.leftPx" [style.width.px]="b.widthPx" [style.background]="b.bg"
+          [style.color]="b.fg" [class.sc-block--maint]="b.type === 'maintenance'"
+          [class.sc-block--selected]="selectedBooking()?.id === b.id" (click)="openDetail(b, $event)">
+          <div class="sc-block__top">
+            <span class="sc-block__name">{{ b.clientName || '—' }}</span>
+            <div class="sc-block__badges">
+              @if (b.recurringId) {
+              <span class="sc-block__recurring">↻</span>
+              }
+              @if (b.type !== 'maintenance') {
+              <span class="sc-block__players" [style.background]="b.playersBadgeBg">{{ b.players }}/4</span>
+              }
+            </div>
+          </div>
+          <div class="sc-block__time">
+            {{ b.timeLabel }}
+            @if (b.type === 'open') { <span>&nbsp;· ABIERTO</span> }
+          </div>
+        </div>
+        }
+
+        <!-- Now indicator -->
+        @if (isToday() && nowLeft() >= 0) {
+        <div class="sc-now" [style.left.px]="nowLeft()">
+          <div class="sc-now__dot"></div>
+        </div>
+        }
+
+      </div>
+    </div>
+    }
+  </div>
+</div>
+}
+
+<!-- Detail panel -->
+@if (selectedBookingVM()) {
+<div class="sc-backdrop" (click)="closeDetail()"></div>
+<aside class="sc-detail-panel">
+  <div class="sc-detail-panel__header" [style.background]="selectedBookingVM()!.bg"
+    [style.color]="selectedBookingVM()!.fg">
+    <span class="sc-detail-panel__type">{{ typeLabels[selectedBookingVM()!.type] }}</span>
+    <button class="sc-detail-panel__close" (click)="closeDetail()">×</button>
+  </div>
+  <div class="sc-detail-panel__body">
+    <div class="sc-detail-row">
+      <span>Cancha</span><strong>{{ courtLabel(selectedBookingVM()!.courtId) }}</strong>
+    </div>
+    <div class="sc-detail-row">
+      <span>Fecha</span><strong>{{ displayDateLabel() }}</strong>
+    </div>
+    <div class="sc-detail-row">
+      <span>Hora</span>
+      <strong>{{ selectedBookingVM()!.timeLabel }} – {{ selectedBookingVM()!.endTimeLabel }}</strong>
+    </div>
+    <div class="sc-detail-row">
+      <span>Duración</span><strong>{{ selectedBookingVM()!.duration * 60 }} min</strong>
+    </div>
+    @if (selectedBookingVM()!.type !== 'maintenance') {
+    <div class="sc-detail-row">
+      <span>Cliente</span><strong>{{ selectedBookingVM()!.clientName || '—' }}</strong>
+    </div>
+    <div class="sc-detail-row">
+      <span>Jugadores</span><strong>{{ selectedBookingVM()!.players }} / 4</strong>
+    </div>
+    }
+  </div>
+  <div class="sc-detail-panel__footer">
+    <button class="pc-btn pc-btn-ghost" (click)="openEditModal()">Editar</button>
+    @if (selectedBookingVM()!.recurringId) {
+    <button class="pc-btn sc-btn-danger" (click)="deleteSelectedSeries()">Eliminar serie</button>
+    }
+    <button class="pc-btn sc-btn-danger" (click)="deleteSelectedBooking()">Eliminar</button>
+  </div>
+</aside>
+}
+
+<!-- New / Edit booking modal -->
+@if (showModal()) {
+<app-booking-modal [preset]="modalPreset()" [courts]="courts" [error]="modalError()" [defaultPrice]="defaultSlotPrice()" (save)="onModalSave($event)"
+  (cancel)="closeModal()" />
+}

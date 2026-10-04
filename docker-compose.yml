@@ -1,0 +1,27 @@
+services:
+  app:
+    build: .
+    ports:
+      - "4200:4200"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www
+      - /var/www/vendor
+      - /var/www/bootstrap/cache
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_KEY=base64:U29tZUxvY2FsRGV2S2V5MzJCeXRlc0xvbmdnZ2dZZXM=
+      - DB_DATABASE=/var/www/storage/db/database.sqlite
+      - FRONTEND_URL=http://localhost:4200

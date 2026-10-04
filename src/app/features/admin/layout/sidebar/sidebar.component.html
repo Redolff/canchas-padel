@@ -1,0 +1,61 @@
+<nav class="sidebar">
+
+  <!-- Logo -->
+  <div class="sidebar__logo">
+    <div class="sidebar__logo-badge">CP</div>
+    <div>
+      <div class="sidebar__logo-name pc-display">{{ userService.user().businessName || 'Club Pro' }}</div>
+      <div class="sidebar__logo-sub">Panel de administración</div>
+    </div>
+  </div>
+
+  <!-- Nav items -->
+  <div class="sidebar__nav">
+    @for (item of navItems; track item.id) {
+      @if (item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="sidebar__nav-item--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="sidebar__nav-item"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.6"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path [attr.d]="item.iconPath"/>
+          </svg>
+          {{ item.label }}
+        </a>
+      } @else {
+        <div class="sidebar__nav-item sidebar__nav-item--static">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.6"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path [attr.d]="item.iconPath"/>
+          </svg>
+          {{ item.label }}
+        </div>
+      }
+    }
+  </div>
+
+  <!-- User profile -->
+  <div class="sidebar__user-wrap">
+    @if (userMenuOpen()) {
+      <div class="sidebar__user-menu" (click)="$event.stopPropagation()">
+        <div class="sidebar__user-menu__email">{{ userService.user().email }}</div>
+        <div class="sidebar__user-menu__divider"></div>
+        <button class="sidebar__user-menu__item" (click)="signOut()">Sign out</button>
+      </div>
+    }
+    <div class="sidebar__user" (click)="toggleUserMenu($event)">
+      <app-avatar [name]="userService.user().name" [size]="32" />
+      <div class="sidebar__user-info">
+        <div class="sidebar__user-name">{{ userService.user().name }}</div>
+        <div class="sidebar__user-role">{{ userService.user().role }}</div>
+      </div>
+      <app-icon name="dots" [size]="14" color="rgba(255,255,255,0.5)" />
+    </div>
+  </div>
+
+</nav>

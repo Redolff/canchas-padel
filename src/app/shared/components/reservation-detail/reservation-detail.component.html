@@ -1,0 +1,193 @@
+<!-- ── MOBILE DETAIL OVERLAY ──────────────────────────────────── -->
+<div class="res-detail-overlay mobile-only pc-root">
+
+  <!-- Topbar -->
+  <div class="res-detail-overlay__topbar">
+    <button class="res-detail-overlay__back" (click)="close.emit()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+    </button>
+    <div class="res-detail-overlay__title pc-display">Detalle de reserva</div>
+    <div class="res-detail-overlay__dots">
+      <app-icon name="dots" [size]="16" color="var(--pc-ink-2)" />
+    </div>
+  </div>
+
+  <div class="res-detail-overlay__body">
+
+    <!-- Hero card -->
+    <div class="res-detail-overlay__hero">
+      <div class="res-detail-overlay__hero-head">
+        <div>
+          <div class="pc-mono res-detail-overlay__ref">{{ reservation.bookingRef }}</div>
+          <div class="res-detail-overlay__time pc-display">{{ timeLabel }} – {{ endTimeLabel }}</div>
+          <div class="res-detail-overlay__date">{{ reservation.whenLabel }}</div>
+        </div>
+        @if (reservation.type === 'private' || reservation.type === 'open') {
+        <span class="pc-badge" [style.background]="reservation.statusStyle.bg"
+          [style.color]="reservation.statusStyle.fg" style="font-size: 10px; align-self: flex-start">
+          <span class="pc-dot" [style.background]="reservation.statusStyle.dot"></span>
+          {{ statusLabels[reservation.status] }}
+        </span>
+        }
+      </div>
+
+      <!-- Court art -->
+      <div class="res-detail-overlay__court">
+        <div class="res-detail-overlay__court-art">
+          <app-court-art [width]="72" [height]="42" [surface]="reservation.courtSurface" [showBall]="false" />
+        </div>
+        <div class="res-detail-overlay__court-info">
+          <div class="res-detail-overlay__court-name">{{ reservation.courtName }}</div>
+          <div class="res-detail-overlay__court-sub">{{ durationLabel }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking info rows -->
+    <div class="res-detail-overlay__card">
+      <div class="res-detail-overlay__section-title">Información</div>
+
+      <div class="res-detail-overlay__info-row">
+        <span>Cliente</span><strong>{{ reservation.clientName || '—' }}</strong>
+      </div>
+      @if (reservation.clientPhone) {
+      <div class="res-detail-overlay__info-row">
+        <span>Teléfono</span><strong>{{ reservation.clientPhone }}</strong>
+      </div>
+      }
+      <div class="res-detail-overlay__info-row">
+        <span>Tipo</span>
+        <strong>{{ bookingTypeLabels[reservation.type] || '-' }}</strong>
+      </div>
+      <div class="res-detail-overlay__info-row">
+        <span>Jugadores</span><strong>{{ reservation.playersLabel }}</strong>
+      </div>
+      <div class="res-detail-overlay__info-row">
+        <span>Total</span><strong>{{ reservation.totalLabel }}</strong>
+      </div>
+
+      @if ((reservation.type === 'private' || reservation.type === 'open') &&
+      (reservation.status === 'pending' || reservation.status === 'partial')) {
+      <button class="res-detail-overlay__action-inline res-detail-overlay__action-inline--pay" (click)="markPaid.emit()">
+        Marcar como pagado
+      </button>
+      }
+    </div>
+
+  </div>
+
+  <!-- Bottom action bar -->
+  <div class="res-detail-overlay__actions">
+    <button class="res-detail-overlay__btn-cancel" (click)="openMobileCancelSheet()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"
+        stroke-linecap="round">
+        <path d="M3 3l10 10M13 3 3 13" />
+      </svg>
+      Eliminar
+    </button>
+    <button class="res-detail-overlay__btn-edit" (click)="edit.emit()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"
+        stroke-linecap="round">
+        <path d="M11 2l3 3-9 9H2v-3l9-9Z" />
+      </svg>
+      Editar reserva
+    </button>
+  </div>
+
+  <!-- Cancel confirmation sheet -->
+  @if (mobileCancelMode()) {
+  <div class="res-cancel-sheet__overlay" (click)="closeMobileCancelSheet()"></div>
+  <div class="res-cancel-sheet">
+    <div class="res-cancel-sheet__handle"></div>
+
+    <div class="res-cancel-sheet__icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+        <path d="M19 6 18 20a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+        <path d="M10 11v6M14 11v6" />
+      </svg>
+    </div>
+
+    <div class="res-cancel-sheet__title pc-display">¿Eliminar esta reserva?</div>
+    <div class="res-cancel-sheet__sub">
+      Se eliminará la reserva de {{ reservation.clientName || '—' }} en {{ reservation.courtName }}.
+    </div>
+
+    <div class="res-cancel-sheet__summary">
+      <div class="pc-mono res-cancel-sheet__summary-time">{{ timeLabel }}</div>
+      <div class="res-cancel-sheet__summary-info">
+        <div>{{ reservation.courtName }} · {{ reservation.clientName || '—' }}</div>
+        <div class="res-cancel-sheet__summary-sub">{{ reservation.whenLabel }} · {{ durationLabel }}</div>
+      </div>
+      <div class="pc-mono res-cancel-sheet__summary-ref">{{ reservation.bookingRef }}</div>
+    </div>
+
+    <div class="res-cancel-sheet__btns">
+      <button class="res-cancel-sheet__btn-keep" (click)="closeMobileCancelSheet()">Mantener</button>
+      <button class="res-cancel-sheet__btn-delete" (click)="onDelete()">Eliminar</button>
+    </div>
+  </div>
+  }
+</div>
+
+<!-- ── DESKTOP DETAIL PANEL ────────────────────────────────────── -->
+<div class="res-backdrop desktop-only" (click)="close.emit()"></div>
+<aside class="res-detail-panel desktop-only">
+  <div class="res-detail-panel__header">
+    <span class="res-detail-panel__ref pc-mono">{{ reservation.bookingRef }}</span>
+    @if (reservation.type === 'private' || reservation.type === 'open') {
+    <span class="pc-badge" [style.background]="reservation.statusStyle.bg"
+      [style.color]="reservation.statusStyle.fg">
+      <span class="pc-dot" [style.background]="reservation.statusStyle.dot"></span>
+      {{ statusLabels[reservation.status] }}
+    </span>
+    }
+    <button class="res-detail-panel__close" (click)="close.emit()">×</button>
+  </div>
+  <div class="res-detail-panel__body">
+    <div class="res-detail-row">
+      <span>Cliente</span><strong>{{ reservation.clientName || '—' }}</strong>
+    </div>
+    <div class="res-detail-row">
+      <span>Teléfono</span><strong>{{ reservation.clientPhone || '—' }}</strong>
+    </div>
+    <div class="res-detail-row">
+      <span>Cancha</span><strong>{{ reservation.courtName }}</strong>
+    </div>
+    <div class="res-detail-row">
+      <span>Tipo</span>
+      <strong>{{ bookingTypeLabels[reservation.type] || '-' }}</strong>
+    </div>
+    <div class="res-detail-row">
+      <span>Cuándo</span><strong>{{ reservation.whenLabel }}</strong>
+    </div>
+    <div class="res-detail-row">
+      <span>Duración</span><strong>{{ durationLabel }}</strong>
+    </div>
+    <div class="res-detail-row">
+      <span>Jugadores</span><strong>{{ reservation.playersLabel }}</strong>
+    </div>
+    <div class="res-detail-row">
+      <span>Total</span><strong>{{ reservation.totalLabel }}</strong>
+    </div>
+    @if ((reservation.type === 'private' || reservation.type === 'open') &&
+    (reservation.status === 'pending' || reservation.status === 'partial')) {
+    <button class="res-btn-action res-btn-mark-paid" (click)="markPaid.emit()">Marcar como pagado</button>
+    }
+    @if ((reservation.type === 'private' || reservation.type === 'open') &&
+    (reservation.status === 'paid' || reservation.status === 'partial')) {
+    <button class="res-btn-action res-btn-refund" (click)="markRefunded.emit()">Reembolsar</button>
+    }
+  </div>
+  <div class="res-detail-panel__footer">
+    <button class="pc-btn pc-btn-ghost" (click)="edit.emit()">Editar</button>
+    @if (reservation.recurringId) {
+    <button class="pc-btn res-btn-danger" (click)="deleteSeries.emit()">Eliminar serie</button>
+    }
+    <button class="pc-btn res-btn-danger" (click)="delete.emit()">Eliminar</button>
+  </div>
+</aside>

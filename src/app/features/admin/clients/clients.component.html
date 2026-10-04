@@ -1,0 +1,251 @@
+<!-- ── MOBILE VIEW ──────────────────────────────────────────────── -->
+<div class="cli-mobile mobile-only pc-root">
+
+  <div class="cli-mobile__topbar">
+    <div class="cli-mobile__topbar-title pc-display">Clientes</div>
+    <div class="cli-mobile__topbar-sub">{{ showingInfo() }}</div>
+  </div>
+
+  <div class="cli-mobile__search">
+    <div class="cli-mobile__search-box">
+      <app-icon name="search" [size]="15" color="var(--pc-muted)" />
+      <input class="cli-mobile__search-input"
+             type="text"
+             placeholder="Buscar por nombre o teléfono…"
+             [value]="searchQuery()"
+             (input)="onSearch($event)" />
+    </div>
+  </div>
+
+  <div class="cli-mobile__list">
+    @for (c of rows(); track c.id) {
+      <div class="cli-mobile__card" (click)="openDetail(c)">
+        <app-avatar [name]="c.displayName" [size]="36" />
+        <div class="cli-mobile__card-info">
+          <div class="cli-mobile__card-name">{{ c.displayName }}</div>
+          <div class="cli-mobile__card-phone">{{ c.telefono }}</div>
+        </div>
+        <span class="pc-badge cli-badge-count">{{ c.reservationsCount }}</span>
+      </div>
+    }
+
+    @if (rows().length === 0 && !clientService.loading()) {
+      <div class="cli-mobile__empty">Ningún cliente encontrado.</div>
+    }
+  </div>
+
+  @if (totalPages() > 1) {
+    <div class="cli-mobile__pagination">
+      <span class="cli-mobile__pagination-info">{{ showingInfo() }}</span>
+      <div class="cli-mobile__pagination-pages">
+        @for (p of pageNumbers(); track $index) {
+          @if (p === '…') {
+            <span class="cli-page-ellipsis">…</span>
+          } @else {
+            <button class="cli-mobile__page-btn" [class.cli-mobile__page-btn--active]="currentPage() === p" (click)="goToPage(+p)">{{ p }}</button>
+          }
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Mobile detail overlay -->
+  @if (selectedClient()) {
+    <div class="cli-detail-overlay">
+      <div class="cli-detail-overlay__header">
+        <button class="cli-detail-overlay__back" (click)="closeDetail()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M19 12H5M12 5l-7 7 7 7"/>
+          </svg>
+        </button>
+        <div class="cli-detail-overlay__name pc-display">{{ selectedClient()!.displayName }}</div>
+      </div>
+
+      <div class="cli-detail-overlay__body">
+        <div class="cli-detail-overlay__card">
+          <div class="cli-detail-overlay__section-title">Datos del cliente</div>
+          <div class="cli-detail-overlay__info-row">
+            <span>Teléfono</span><strong>{{ selectedClient()!.telefono }}</strong>
+          </div>
+          @if (selectedClient()!.apellido) {
+            <div class="cli-detail-overlay__info-row">
+              <span>Apellido</span><strong>{{ selectedClient()!.apellido }}</strong>
+            </div>
+          }
+          @if (selectedClient()!.dni) {
+            <div class="cli-detail-overlay__info-row">
+              <span>DNI</span><strong>{{ selectedClient()!.dni }}</strong>
+            </div>
+          }
+          <div class="cli-detail-overlay__info-row">
+            <span>Reservas</span><strong>{{ selectedClient()!.reservationsCount }}</strong>
+          </div>
+        </div>
+
+        <div class="cli-detail-overlay__card">
+          <div class="cli-detail-overlay__section-title">Historial de reservas</div>
+          @for (r of detailReservations(); track r.bookingRef) {
+            <div class="cli-detail-overlay__res-row">
+              <div class="cli-detail-overlay__res-left">
+                <span class="pc-mono cli-detail-overlay__ref">{{ r.bookingRef }}</span>
+                <div class="cli-detail-overlay__res-info">
+                  <span>{{ r.courtName }}</span>
+                  <span class="cli-detail-overlay__res-when">{{ r.whenLabel }}</span>
+                </div>
+              </div>
+              <div class="cli-detail-overlay__res-right">
+                <span class="pc-badge"
+                      [style.background]="r.statusStyle.bg"
+                      [style.color]="r.statusStyle.fg">
+                  <span class="pc-dot" [style.background]="r.statusStyle.dot"></span>
+                  {{ statusLabels[r.status] }}
+                </span>
+                <span class="pc-mono cli-detail-overlay__res-total">{{ r.totalLabel }}</span>
+              </div>
+            </div>
+          }
+          @if (detailReservations().length === 0) {
+            <div class="cli-detail-overlay__empty">Sin reservas aún.</div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+</div>
+
+<!-- ── DESKTOP VIEW ────────────────────────────────────────────── -->
+<app-topbar class="desktop-only" title="Clientes" [subtitle]="showingInfo()">
+  <div class="cli-search">
+    <app-icon name="search" [size]="14" color="var(--pc-muted)" />
+    <input class="cli-search__input"
+           type="text"
+           placeholder="Buscar por nombre o teléfono…"
+           [value]="searchQuery()"
+           (input)="onSearch($event)" />
+  </div>
+</app-topbar>
+
+<!-- Table + detail panel -->
+<div class="cli-layout desktop-only">
+
+  <!-- Table -->
+  <div class="cli-scroll" [class.cli-scroll--narrow]="selectedClient()">
+    <div class="cli-table-wrap">
+
+      <div class="cli-table-head">
+        <div>Cliente</div>
+        <div>Teléfono</div>
+        <div>DNI</div>
+        <div>Reservas</div>
+        <div></div>
+      </div>
+
+      @for (c of rows(); track c.id; let last = $last) {
+        <div class="cli-row"
+             [class.cli-row--last]="last"
+             [class.cli-row--selected]="selectedClient()?.id === c.id"
+             (click)="openDetail(c)">
+          <div class="cli-client">
+            <app-avatar [name]="c.displayName" [size]="28" />
+            <div class="cli-client__info">
+              <div class="cli-client__name">{{ c.displayName }}</div>
+              <div class="cli-client__phone">{{ c.telefono }}</div>
+            </div>
+          </div>
+          <div class="cli-phone">{{ c.telefono }}</div>
+          <div class="cli-dni">{{ c.dni || '—' }}</div>
+          <div class="cli-count">
+            <span class="pc-badge cli-badge-count">{{ c.reservationsCount }}</span>
+          </div>
+          <div class="cli-dots">
+            <app-icon name="dots" [size]="14" color="var(--pc-muted)" />
+          </div>
+        </div>
+      }
+
+      @if (rows().length === 0 && !clientService.loading()) {
+        <div class="cli-empty">Ningún cliente encontrado.</div>
+      }
+
+    </div>
+
+    <!-- Pagination -->
+    <div class="cli-pagination">
+      <span class="cli-pagination__info">{{ showingInfo() }}</span>
+      <div class="cli-pagination__pages">
+        @for (p of pageNumbers(); track $index) {
+          @if (p === '…') {
+            <span class="cli-page-ellipsis">…</span>
+          } @else {
+            <button class="cli-page-btn" [class.cli-page-btn--active]="currentPage() === p" (click)="goToPage(+p)">{{ p }}</button>
+          }
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail panel -->
+  @if (selectedClient()) {
+    <div class="cli-detail">
+      <div class="cli-detail__header">
+        <div class="cli-detail__avatar-row">
+          <app-avatar [name]="selectedClient()!.displayName" [size]="40" />
+          <div>
+            <div class="cli-detail__name pc-display">{{ selectedClient()!.displayName }}</div>
+            <div class="cli-detail__phone">{{ selectedClient()!.telefono }}</div>
+          </div>
+        </div>
+        <button class="cli-detail__close" (click)="closeDetail()">×</button>
+      </div>
+
+      <div class="cli-detail__body">
+        <div class="cli-detail__section">
+          <div class="cli-detail__section-title">Datos</div>
+          @if (selectedClient()!.apellido) {
+            <div class="cli-detail__row">
+              <span>Apellido</span><strong>{{ selectedClient()!.apellido }}</strong>
+            </div>
+          }
+          @if (selectedClient()!.dni) {
+            <div class="cli-detail__row">
+              <span>DNI</span><strong>{{ selectedClient()!.dni }}</strong>
+            </div>
+          }
+          <div class="cli-detail__row">
+            <span>Reservas totales</span>
+            <strong>{{ selectedClient()!.reservationsCount }}</strong>
+          </div>
+        </div>
+
+        <div class="cli-detail__section">
+          <div class="cli-detail__section-title">Historial</div>
+          @for (r of detailReservations(); track r.bookingRef) {
+            <div class="cli-detail__res-row">
+              <div class="cli-detail__res-main">
+                <span class="pc-mono cli-detail__res-ref">{{ r.bookingRef }}</span>
+                <span class="cli-detail__res-court">{{ r.courtName }}</span>
+              </div>
+              <div class="cli-detail__res-meta">
+                <span class="cli-detail__res-when">{{ r.whenLabel }}</span>
+                <span class="pc-badge"
+                      [style.background]="r.statusStyle.bg"
+                      [style.color]="r.statusStyle.fg"
+                      style="font-size: 10px">
+                  <span class="pc-dot" [style.background]="r.statusStyle.dot"></span>
+                  {{ statusLabels[r.status] }}
+                </span>
+              </div>
+              <span class="pc-mono cli-detail__res-total">{{ r.totalLabel }}</span>
+            </div>
+          }
+          @if (detailReservations().length === 0) {
+            <div class="cli-detail__empty">Sin reservas aún.</div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

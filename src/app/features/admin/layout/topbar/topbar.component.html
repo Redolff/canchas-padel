@@ -1,0 +1,11 @@
+<header class="topbar">
+  <div class="topbar__titles">
+    <h1 class="topbar__title">{{ title }}</h1>
+    @if (subtitle) {
+      <span class="topbar__subtitle">{{ subtitle }}</span>
+    }
+  </div>
+  <div class="topbar__actions">
+    <ng-content />
+  </div>
+</header>

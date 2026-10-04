@@ -1,0 +1,112 @@
+<div class="bm-backdrop" (click)="onCancel()">
+  <div class="bm-dialog" (click)="$event.stopPropagation()">
+
+    <div class="bm-header">
+      <h2 class="bm-title pc-display">{{ isEditing ? 'Editar reserva' : 'Nueva reserva' }}</h2>
+      <button class="bm-close" type="button" (click)="onCancel()">×</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSave()" class="bm-body">
+      <div class="bm-field">
+        <label class="bm-label">Cancha</label>
+        <select class="bm-select" formControlName="courtId">
+          @for (court of courts; track court.id) {
+          <option [value]="court.id">{{ court.name | titlecase }} · {{ court.location === 'Indoor' ? 'Interior' : 'Exterior' }}
+          </option>
+          }
+        </select>
+      </div>
+
+      <div class="bm-field">
+        <label class="bm-label">{{ repeat() && !isEditing ? 'Fecha de inicio' : 'Fecha' }}</label>
+        <input class="bm-input" type="date" formControlName="date" />
+      </div>
+
+      @if (!isEditing) {
+      <div class="bm-field bm-field--repeat">
+        <label class="bm-label bm-label--repeat">
+          <input type="checkbox" class="bm-checkbox" [checked]="repeat()" (change)="repeat.set(!repeat())" />
+          Repetir semanalmente
+        </label>
+      </div>
+      @if (repeat()) {
+      <div class="bm-field">
+        <label class="bm-label">Repetir hasta</label>
+        <input class="bm-input" type="date" formControlName="endDate" />
+      </div>
+      }
+      }
+      
+      <div class="bm-row">
+        <div class="bm-field">
+          <label class="bm-label">Hora de inicio</label>
+          <select class="bm-select" formControlName="startHour">
+            @for (opt of startTimeOptions(); track opt.value) {
+            <option [value]="opt.value" [disabled]="opt.occupied">
+              {{ opt.label }}
+            </option>
+            }
+          </select>
+        </div>
+        <div class="bm-field">
+          <label class="bm-label">Duración</label>
+          <select class="bm-select" formControlName="duration">
+            @for (opt of durationOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="bm-field">
+        <label class="bm-label">Tipo</label>
+        <select class="bm-select" formControlName="type">
+          @for (t of typeOptions; track t) {
+          <option [value]="t">{{ typeLabels[t] }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="bm-field">
+        <label class="bm-label" [class.bm-label--disabled]="isMaintenance">Nombre del cliente</label>
+        <input class="bm-input" type="text" formControlName="nombre" placeholder="ej. Mateo Lopez" />
+      </div>
+
+      <div class="bm-field">
+        <label class="bm-label" [class.bm-label--disabled]="isMaintenance">Teléfono</label>
+        <input class="bm-input" type="tel" formControlName="telefono" placeholder="ej. 1141234567" />
+      </div>
+
+      <div class="bm-field">
+        <label class="bm-label" [class.bm-label--disabled]="isMaintenance">Jugadores</label>
+        <select class="bm-select" formControlName="players">
+          @for (n of [1, 2, 3, 4]; track n) {
+          <option [value]="n">{{ n }}</option>
+          }
+        </select>
+      </div>
+
+      @if (!isNoPriceType) {
+      <div class="bm-field">
+        <label class="bm-label">Precio</label>
+        <input class="bm-input" type="number" formControlName="total" placeholder="ej. 16800" min="0" />
+      </div>
+      }
+
+    </form>
+
+    @if (error) {
+    <div class="bm-error">{{ error }}</div>
+    }
+
+    <div class="bm-footer">
+      <button type="button" class="pc-btn pc-btn-ghost" (click)="onCancel()">Cancelar</button>
+      <button type="button" class="pc-btn pc-btn-primary" (click)="onSave()">
+        @if (isEditing) { Guardar cambios }
+        @else if (repeat()) { Crear serie }
+        @else { Agregar reserva }
+      </button>
+    </div>
+
+  </div>
+</div>

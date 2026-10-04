@@ -1,0 +1,11 @@
+@use 'tokens';
+@use 'base';
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--pc-bg);
+  font-family: var(--pc-sans);
+}

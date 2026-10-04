@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.angular/
+out-tsc/
+.env
+.DS_Store
+
+# Laravel
+backend/vendor/
+backend/.env
+backend/storage/logs/
+backend/storage/framework/cache/
+backend/storage/framework/sessions/
+backend/storage/framework/views/
+backend/database/database.sqlite
+
+# Handoff assets
+*.zip

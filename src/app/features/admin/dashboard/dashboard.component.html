@@ -1,0 +1,242 @@
+<!-- ── MOBILE TODAY VIEW ──────────────────────────────────────── -->
+<div class="dash-mobile mobile-only pc-root">
+
+  <!-- Mobile topbar -->
+  <div class="dash-mobile__topbar">
+    <div class="dash-mobile__topbar-avatar">
+      <app-avatar [name]="userService.user().name || 'Manager'" [size]="26" />
+    </div>
+    <div class="dash-mobile__topbar-titles">
+      <div class="dash-mobile__topbar-title pc-display">Hola, {{ userService.user().name.split(' ')[0] || 'Diego' }}
+      </div>
+      <div class="dash-mobile__topbar-sub">{{ mobileDateLabel() }} · {{ userService.user().businessName || 'Club' }}
+      </div>
+    </div>
+    <div class="dash-mobile__topbar-bell">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--pc-ink-2)" stroke-width="1.6"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 13c0-4 3-7 7-7s7 3 7 7v4l1 2H4l1-2v-4zM10 19a2 2 0 004 0" />
+      </svg>
+    </div>
+  </div>
+
+  <div class="dash-mobile__scroll">
+
+    <!-- Snapshot hero card -->
+    <div class="dash-mobile__snapshot">
+      <div class="dash-mobile__snapshot-deco" aria-hidden="true">
+        <app-court-art [width]="200" [height]="100" [showBall]="false" />
+      </div>
+      <div class="dash-mobile__live pc-mono">
+        <span class="dash-mobile__live-dot pc-pulse"></span>
+        EN VIVO · {{ subtitle().split('· ')[1] || '' }}
+      </div>
+      <div class="dash-mobile__snapshot-count pc-display">
+        <span class="dash-mobile__count-num">{{ kpis().at(0)?.value ?? '—' }}</span> reservas hoy
+      </div>
+      <div class="dash-mobile__snapshot-stats">
+        <div class="dash-mobile__stat">
+          <div class="dash-mobile__stat-label">Ingresos</div>
+          <div class="dash-mobile__stat-val pc-mono">{{ kpis().at(1)?.value ?? '—' }}</div>
+        </div>
+        <div class="dash-mobile__stat-divider"></div>
+        <div class="dash-mobile__stat">
+          <div class="dash-mobile__stat-label">Ocupación</div>
+          <div class="dash-mobile__stat-val pc-mono">{{ kpis().at(2)?.value ?? '—' }}</div>
+        </div>
+        <div class="dash-mobile__stat-divider"></div>
+        <div class="dash-mobile__stat">
+          <div class="dash-mobile__stat-label">Pendientes</div>
+          <div class="dash-mobile__stat-val pc-mono"
+            [style.color]="pendingCount() > 0 ? 'var(--pc-accent)' : 'inherit'">
+            {{ pendingCount() }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Needs attention -->
+    @if (pendingCount() > 0) {
+    <div class="dash-mobile__attention">
+      <div class="dash-mobile__attention-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--pc-warn)" stroke-width="1.6"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 1.5 1.5 14h13L8 1.5Z" />
+          <path d="M8 6.5v3M8 11.5v.01" />
+        </svg>
+      </div>
+      <div class="dash-mobile__attention-text">
+        <div class="dash-mobile__attention-title">{{ pendingCount() }} reserva{{ pendingCount() === 1 ? '' : 's' }}
+          necesita{{ pendingCount() === 1 ? '' : 'n' }} atención</div>
+        <div class="dash-mobile__attention-sub">Revisar pagos pendientes</div>
+      </div>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--pc-muted)" stroke-width="1.6"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18l6-6-6-6" />
+      </svg>
+    </div>
+    }
+
+    <!-- Today's schedule header -->
+    <div class="dash-mobile__section-head">
+      <span class="dash-mobile__section-title pc-display">Agenda de hoy</span>
+      <a routerLink="/reservations" class="dash-mobile__view-all">Ver todas →</a>
+    </div>
+
+    <!-- Reservation rows -->
+    @if (todayRows().length === 0) {
+    <div class="dash-mobile__empty">Sin reservas para hoy.</div>
+    }
+
+    <div class="dash-mobile__list">
+      @for (r of todayRows(); track r.id) {
+      <div class="dash-mobile__res-card pc-row" (click)="openDetail(r)">
+        <!-- Time -->
+        <div class="dash-mobile__res-time">
+          <div class="pc-mono dash-mobile__res-start">{{ r.timeLabel }}</div>
+          <div class="pc-mono dash-mobile__res-end">{{ r.endTimeLabel }}</div>
+        </div>
+        <div class="dash-mobile__res-divider"></div>
+        <!-- Court + host -->
+        <div class="dash-mobile__res-info">
+          <div class="dash-mobile__res-court">
+            {{ r.courtName }}
+            <span class="pc-dot" style="background: var(--pc-line)"></span>
+            <span class="dash-mobile__res-players">{{ r.players }}/4</span>
+          </div>
+          <div class="dash-mobile__res-host">
+            <app-avatar [name]="r.clientName || '?'" [size]="20" />
+            <span>{{ r.clientName || '—' }}</span>
+            <span class="booking-type" [class.booking-type--private]="r.type === 'private'"
+              [class.booking-type--open]="r.type === 'open'" [class.booking-type--lesson]="r.type === 'lesson'"
+              [class.booking-type--maintenance]="r.type === 'maintenance'">
+              {{ bookingTypeLabels[r.type] }}
+            </span>
+          </div>
+        </div>
+        <!-- Status -->
+        @if (r.type === 'private' || r.type === 'open') {
+        <span class="pc-badge"
+          [style.background]="statusLabels[r.status] ? 'rgba(52,211,153,0.14)' : 'rgba(245,158,11,0.14)'"
+          [class.dash-mobile__badge--paid]="r.status === 'paid'"
+          [class.dash-mobile__badge--pending]="r.status === 'pending' || r.status === 'partial'">
+          <span class="pc-dot" [class.pc-dot--success]="r.status === 'paid'"
+            [class.pc-dot--warn]="r.status === 'pending' || r.status === 'partial'"></span>
+          {{ statusLabels[r.status] }}
+        </span>
+        }
+      </div>
+      }
+    </div>
+
+  </div>
+</div>
+
+<!-- ── DESKTOP VIEW ────────────────────────────────────────────── -->
+<app-topbar class="desktop-only" title="Resumen" [subtitle]="subtitle()">
+<!--  <div class="pc-chip">-->
+<!--    <app-icon name="weather" [size]="13" /> 22° · Clear-->
+<!--  </div>-->
+  <button class="pc-btn pc-btn-primary" (click)="openNewBookingModal()">
+    <app-icon name="plus" [size]="14" color="var(--pc-accent)" /> Nueva reserva
+  </button>
+</app-topbar>
+
+<div class="dash desktop-only">
+
+  <!-- KPIs -->
+  <div class="dash__kpis">
+    @for (k of kpis(); track k.label) {
+    <div class="dash__kpi" [class.dash__kpi--special]="k.special">
+      @if (k.special) {
+      <div class="dash__kpi-art" aria-hidden="true">
+        <app-court-art [width]="140" [height]="70" [showBall]="false" />
+      </div>
+      }
+      <div class="dash__kpi-label">{{ k.label }}</div>
+      <div class="dash__kpi-value pc-display">{{ k.value }}</div>
+      <div class="dash__kpi-footer">
+        <span class="dash__kpi-delta" [class.dash__kpi-delta--pos]="k.deltaPos"
+          [class.dash__kpi-delta--special]="k.special && k.deltaPos">
+          {{ k.delta }}
+        </span>
+        <span class="dash__kpi-sub">{{ k.sub }}</span>
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- Upcoming reservations -->
+  <div class="pc-card dash__upcoming">
+    <div class="dash__section-head">
+      <span class="dash__section-title">Próximas en cancha</span>
+      <a routerLink="/reservations" class="dash__view-all">Ver todas las reservas →</a>
+    </div>
+
+    @for (r of todayRows(); track $index; let i = $index) {
+    <div class="dash__upcoming-row" [class.dash__upcoming-row--first]="i === 0" (click)="openDetail(r)">
+      <span class="dash__time pc-mono">{{ r.timeLabel }}</span>
+      <span class="dash__court">
+        <app-court-mini [size]="14" /> {{ r.courtName }}
+      </span>
+      <span class="dash__customer">
+        <app-avatar [name]="r.clientName || '?'" [size]="22" />
+
+        <span class="dash__customer-name">
+          {{ r.clientName || '—' }}
+        </span>
+
+        <span class="booking-type" [class.booking-type--private]="r.type === 'private'"
+          [class.booking-type--open]="r.type === 'open'" [class.booking-type--lesson]="r.type === 'lesson'"
+          [class.booking-type--maintenance]="r.type === 'maintenance'">
+          {{ bookingTypeLabels[r.type] }}
+        </span>
+
+        @if (r.needsPlayer) {
+        <span class="pc-badge pc-badge--warn">
+          FALTA 1
+        </span>
+        }
+      </span>
+
+      <span class="dash__players">
+        {{ r.players }}/4 jugadores
+      </span>
+      <span class="dash__status">
+        @if (r.type === 'private' || r.type === 'open') {
+        <span class="pc-badge" [class.pc-badge--paid]="r.status === 'paid'"
+          [class.pc-badge--pending]="r.status === 'pending' || r.status === 'partial'">
+          <span class="pc-dot" [class.pc-dot--success]="r.status === 'paid'"
+            [class.pc-dot--warn]="r.status === 'pending' || r.status === 'partial'"></span>
+          {{ statusLabels[r.status] }}
+        </span>
+        }
+      </span>
+      <span class="dash__row-dots">
+        <app-icon name="dots" [size]="14" color="var(--pc-muted)" />
+      </span>
+    </div>
+    }
+
+    @if (todayRows().length === 0) {
+    <div class="dash__upcoming-empty">No hay reservas para hoy.</div>
+    }
+  </div>
+
+</div>
+
+@if (selectedRowVM()) {
+<app-reservation-detail
+  [reservation]="selectedRowVM()!"
+  (close)="closeDetail()"
+  (edit)="openEditFromDetail()"
+  (markPaid)="markAsPaid()"
+  (markRefunded)="markAsRefunded()"
+  (delete)="deleteReservation()" />
+}
+
+<!-- New booking modal -->
+@if (showModal()) {
+<app-booking-modal [preset]="modalPreset()" [courts]="courts" [error]="modalError()" [defaultPrice]="defaultSlotPrice()" (save)="onModalSave($event)"
+  (cancel)="closeModal()" />
+}

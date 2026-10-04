@@ -1,0 +1,155 @@
+<app-topbar class="cal-topbar" title="Calendario" [subtitle]="topbarSubtitle()">
+  <button class="pc-btn pc-btn-ghost cal-topbar__action" type="button" (click)="goToSchedule()">
+    Ver agenda completa
+  </button>
+</app-topbar>
+
+<main class="cal-page">
+  <section class="cal-step cal-step--calendar">
+    <div class="cal-step__eyebrow">Paso 1</div>
+    <div class="cal-step__head">
+      <div>
+        <h2>Elegí una fecha</h2>
+        <span>{{ selectedDateLabel() }}</span>
+      </div>
+      <div class="cal-month-nav">
+        <button class="cal-icon-btn" type="button" (click)="previousMonth()" aria-label="Mes anterior">
+          <app-icon name="chevron-left" [size]="16" color="var(--pc-ink)" />
+        </button>
+        <strong>{{ monthLabel() }}</strong>
+        <button class="cal-icon-btn" type="button" (click)="nextMonth()" aria-label="Mes siguiente">
+          <app-icon name="chevron-right" [size]="16" color="var(--pc-ink)" />
+        </button>
+      </div>
+    </div>
+
+    <div class="cal-calendar">
+      @for (dayName of weekDays; track dayName) {
+        <div class="cal-calendar__weekday">{{ dayName }}</div>
+      }
+
+      @for (day of calendarDays(); track $index) {
+        <button
+          class="cal-calendar__day"
+          type="button"
+          [class.cal-calendar__day--empty]="!day.isCurrentMonth"
+          [class.cal-calendar__day--selected]="isSelectedDate(day)"
+          [disabled]="!day.isCurrentMonth"
+          (click)="selectDate(day)">
+          @if (day.isCurrentMonth) {
+            <span>{{ day.day }}</span>
+          }
+        </button>
+      }
+    </div>
+  </section>
+
+  <section #courtStep class="cal-step">
+    <div class="cal-step__eyebrow">Paso 2</div>
+    <div class="cal-step__head">
+      <div>
+        <h2>Seleccioná una cancha</h2>
+        <span>{{ selectedDateLabel() }}</span>
+      </div>
+    </div>
+
+    <div class="cal-courts">
+      @for (court of courts(); track court.id) {
+        <button
+          class="cal-court-card"
+          type="button"
+          [class.cal-court-card--selected]="selectedCourtId() === court.id"
+          (click)="selectCourt(court.id)">
+          <app-court-art [width]="58" [height]="34" [surface]="court.surface" [showBall]="false" />
+          <span class="cal-court-card__name">{{ courtLabel(court.id) }}</span>
+          <span class="cal-court-card__sub">{{ court.location === 'Indoor' ? 'Interior' : 'Exterior' }}</span>
+        </button>
+      }
+    </div>
+  </section>
+
+  <section #slotsStep class="cal-step">
+    <div class="cal-step__eyebrow">Paso 3</div>
+    <div class="cal-step__head">
+      <div>
+        <h2>Horarios</h2>
+        <span>
+          @if (selectedCourt()) {
+            {{ courtLabel(selectedCourt()!.id) }} · {{ selectedDateLabel() }}
+          } @else {
+            Elegí una cancha
+          }
+        </span>
+      </div>
+    </div>
+
+    @if (selectedCourt()) {
+      <div class="cal-slots">
+        <div class="cal-slot-group">
+          <div class="cal-slot-group__head">
+            <strong>Libres</strong>
+            <span>{{ availableSlots().length }}</span>
+          </div>
+          <div class="cal-slot-grid">
+            @for (slot of availableSlots(); track slot.start) {
+              <span class="cal-slot-chip cal-slot-chip--available">{{ slot.label }}</span>
+            } @empty {
+              <span class="cal-empty">Sin disponibilidad</span>
+            }
+          </div>
+        </div>
+
+        <div class="cal-slot-group">
+          <div class="cal-slot-group__head">
+            <strong>Ocupados</strong>
+            <span>{{ occupiedSlots().length }}</span>
+          </div>
+          <div class="cal-slot-grid">
+            @for (slot of occupiedSlots(); track slot.id) {
+              <span class="cal-slot-chip cal-slot-chip--occupied">
+                {{ slot.label }}
+              </span>
+            } @empty {
+              <span class="cal-empty">Sin horarios ocupados</span>
+            }
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="cal-placeholder">Seleccioná una cancha para ver disponibilidad.</div>
+    }
+  </section>
+
+  <section #summaryStep class="cal-step cal-summary">
+    <div class="cal-step__eyebrow">Paso 4</div>
+    <div class="cal-step__head">
+      <div>
+        <h2>Resumen</h2>
+        <span>Disponibilidad consultada</span>
+      </div>
+    </div>
+
+    <div class="cal-summary__grid">
+      <div>
+        <span>Fecha</span>
+        <strong>{{ selectedDateLabel() }}</strong>
+      </div>
+      <div>
+        <span>Cancha</span>
+        <strong>{{ selectedCourt() ? courtLabel(selectedCourt()!.id) : 'Sin seleccionar' }}</strong>
+      </div>
+      <div>
+        <span>Horarios disponibles</span>
+        <strong>{{ selectedCourt() ? availableSlots().length : 0 }}</strong>
+      </div>
+      <div>
+        <span>Horarios ocupados</span>
+        <strong>{{ selectedCourt() ? occupiedSlots().length : 0 }}</strong>
+      </div>
+    </div>
+
+    <button class="pc-btn pc-btn-primary cal-summary__button" type="button" (click)="goToSchedule()">
+      Ver agenda completa
+    </button>
+  </section>
+</main>

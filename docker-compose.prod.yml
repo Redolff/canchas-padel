@@ -1,0 +1,63 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        API_URL: ${API_URL}
+    ports:
+      - 8080:80
+    networks:
+      - padel
+      - dokploy-network
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.courtmanage-front-hvreht-1-web.rule=Host(`admin.clubpro.com.ar`)
+      - traefik.http.routers.courtmanage-front-hvreht-1-web.entrypoints=web
+      - traefik.http.services.courtmanage-front-hvreht-1-web.loadbalancer.server.port=80
+      - traefik.http.routers.courtmanage-front-hvreht-1-web.service=courtmanage-front-hvreht-1-web
+      - traefik.enable=true
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      APP_NAME: PadelCenter
+      APP_ENV: production
+      APP_DEBUG: false
+      APP_KEY: ${APP_KEY}
+      APP_URL: ${APP_URL}
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /var/www/storage/db/database.sqlite
+      FRONTEND_URL: ${FRONTEND_URL}
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS}
+      SESSION_DOMAIN: ${SESSION_DOMAIN}
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: error
+      PHP_CLI_SERVER_WORKERS: "4"
+    ports:
+      - 8000:8000
+    volumes:
+      - sqlite_data:/var/www/storage/db
+    healthcheck:
+      test: ["CMD", "php", "artisan", "--version"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - padel
+volumes:
+  sqlite_data: null
+networks:
+  padel:
+    driver: bridge
+  dokploy-network:
+    external: true
