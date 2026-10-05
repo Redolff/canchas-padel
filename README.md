@@ -9,16 +9,7 @@ Panel de administración para un club de pádel. Frontend Angular 18 + Backend L
 
 ## Inicio rápido
 
-```bash
-# 1. Clonar el repositorio
-git clone git@github.com:gamanuel/court-manager.git
-cd court-manager
-
-# 2. Levantar todo (la primera vez tarda ~2 min mientras descarga imágenes y compila)
-docker compose up --build
-```
-
-Eso es todo. Al iniciar, el contenedor del backend automáticamente:
+ Al iniciar, el contenedor del backend automáticamente:
 - Crea el archivo `.env`
 - Genera la `APP_KEY`
 - Crea la base de datos SQLite
@@ -32,12 +23,6 @@ Eso es todo. Al iniciar, el contenedor del backend automáticamente:
 | Frontend  | http://localhost:4200       |
 | Backend   | http://localhost:8000       |
 
-### Credenciales de acceso
-
-| Campo     | Valor                       |
-|-----------|-----------------------------|
-| Email     | `diego@padelcenter.com.ar`  |
-| Contraseña| `admin123`                  |
 
 ## Comandos útiles
 
@@ -88,23 +73,6 @@ git pull
 docker compose -f docker-compose.prod.yml build --no-cache frontend
 docker compose -f docker-compose.prod.yml up -d frontend
 ```
-
-### Variables de entorno del backend (Dokploy)
-
-```
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://api.clubpro.com.ar
-APP_KEY=<generada>
-FRONTEND_URL=https://admin.clubpro.com.ar
-SANCTUM_STATEFUL_DOMAINS=admin.clubpro.com.ar
-SESSION_DOMAIN=.clubpro.com.ar
-DB_CONNECTION=sqlite
-DB_DATABASE=/var/www/database/database.sqlite
-LOG_CHANNEL=stderr
-LOG_LEVEL=error
-```
-
 ---
 
 ## Estructura del proyecto

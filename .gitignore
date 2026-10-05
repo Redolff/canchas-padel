@@ -4,6 +4,7 @@ dist/
 out-tsc/
 .env
 .DS_Store
+README2.md
 
 # Laravel
 backend/vendor/
