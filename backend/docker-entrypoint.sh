@@ -43,4 +43,4 @@ if [ ! -f storage/db/.seeded ]; then
   touch storage/db/.seeded
 fi
 
-exec php artisan serve --host=0.0.0.0 --port=8000
+exec php artisan serve --host=0.0.0.0 --port="${PORT:-8000}"
