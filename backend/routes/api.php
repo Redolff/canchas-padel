@@ -8,6 +8,12 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RecurringReservationController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+    ]);
+});
+
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
