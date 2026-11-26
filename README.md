@@ -45,34 +45,17 @@ docker compose down
 
 ## Producción
 
-El panel está desplegado en un VPS Hetzner usando **Dokploy** + **Cloudflare Tunnel**.
+| Servicio  | URL                                     | Hosting |
+|-----------|-----------------------------------------|---------|
+| Frontend  | https://tus-canchas-padel.vercel.app    | Vercel  |
+| Backend   | https://canchas-padel.onrender.com      | Render  |
 
-| Servicio  | URL                          |
-|-----------|------------------------------|
-| Frontend  | https://admin.clubpro.com.ar |
-| Backend   | https://api.clubpro.com.ar   |
+### Cómo publicar cambios
 
-### Stack de producción
+Hacé commit y push a `main`. Vercel despliega el frontend automáticamente.
 
-```
-GitHub (branch: production)
-  └── Dokploy (webhook auto-deploy)
-        └── docker-compose.prod.yml
-              ├── frontend  (nginx, puerto 80)
-              └── backend   (Laravel, puerto 8000)
-                    └── SQLite (Docker volume: sqlite_data)
-        ↑
-        Cloudflare Tunnel → admin.clubpro.com.ar / api.clubpro.com.ar
-```
+La URL de la API en producción está en `src/environments/environment.prod.ts`. La configuración de cada servicio (variables de entorno incluidas) está en los paneles de Vercel y Render. En Render, `FRONTEND_URL` tiene que ser la dirección del frontend, porque CORS solo permite ese origen.
 
-### Redesplegar manualmente (en el VPS)
-
-```bash
-cd /etc/dokploy/compose/courtmanage-front-hvreht/code
-git pull
-docker compose -f docker-compose.prod.yml build --no-cache frontend
-docker compose -f docker-compose.prod.yml up -d frontend
-```
 ---
 
 ## Estructura del proyecto

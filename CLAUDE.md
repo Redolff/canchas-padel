@@ -141,7 +141,7 @@ Route model binding on `Reservation` resolves by `booking_ref` (via `getRouteKey
 
 **Multi-tenancy**: All resources are scoped by `business_account_id`. The `users` table has a `business_account_id` FK. Controllers call `$request->user()->business_account_id` to scope queries. `DatabaseSeeder` creates two demo `BusinessAccount` rows and backfills the user. `ReservationSeeder` uses `insert` (not idempotent) — re-running it on a populated DB throws UNIQUE constraint on `booking_ref`; guard with the `.seeded` flag file.
 
-**CORS** (`backend/config/cors.php`): `allowed_origins: ['*']` — open for dev.
+**CORS** (`backend/config/cors.php`): allows only the origin in `FRONTEND_URL` (default `http://localhost:4200`).
 
 ---
 
@@ -187,7 +187,7 @@ All styles use CSS custom properties defined in `src/styles/_tokens.scss`.
 export const environment = { production: false, apiUrl: 'http://localhost:8000' };
 ```
 
-The production build uses `src/environments/environment.prod.ts` via `fileReplacements` in `angular.json`. The `Dockerfile` also runs a `sed` to substitute the URL at build time, but since `environment.prod.ts` already has the correct URL hardcoded, the `sed` is effectively a no-op.
+The production build uses `src/environments/environment.prod.ts` via `fileReplacements` in `angular.json`; it points to `https://canchas-padel.onrender.com`.
 
 **Laravel** `.env` key settings: `DB_CONNECTION=sqlite`, `APP_URL=http://localhost:8000`, `SANCTUM_STATEFUL_DOMAINS=localhost:4200`.
 
@@ -195,89 +195,25 @@ The production build uses `src/environments/environment.prod.ts` via `fileReplac
 
 ## Production Deployment
 
-**Stack**: Hetzner VPS (Ubuntu) → Dokploy → Docker Compose → Cloudflare Tunnel
+**Stack**: GitHub (`main`) → Vercel (frontend) + Render (backend), both on free hosting.
 
-**Live URLs**:
-| Service  | URL                          |
-|----------|------------------------------|
-| Frontend | https://admin.clubpro.com.ar |
-| Backend  | https://api.clubpro.com.ar   |
+| Service  | URL                                     |
+|----------|-----------------------------------------|
+| Frontend | https://tus-canchas-padel.vercel.app    |
+| Backend  | https://canchas-padel.onrender.com      |
 
-**Branch**: `production` — Dokploy deploys from this branch via GitHub webhook.
+**Branch**: `main` is the only branch. Pushing to it deploys the frontend to Vercel automatically.
 
-**Compose file**: `docker-compose.prod.yml` — frontend on port 80, backend on port 8000.
+**Frontend (Vercel)**: runs the Angular production build. Project settings live in the Vercel dashboard (there is no `vercel.json` in the repo). Files in `public/` (favicon, `og.jpg`) are copied to the site root via `assets` in `angular.json`.
 
-**Dokploy app path on VPS**: `/etc/dokploy/compose/courtmanage-front-hvreht/code/`
-
-### Cloudflare Tunnel
-
-Tunnel ID: `7de784ee-bd93-415d-ba8a-f83cede98f50`. The systemd service (`cloudflared`) reads config from `/etc/cloudflared/config.yml` — this is the source of truth, **not** `/root/.cloudflared/config.yml`. After editing `/root/.cloudflared/config.yml`, always copy it over:
-
-```bash
-cp /root/.cloudflared/config.yml /etc/cloudflared/config.yml && systemctl restart cloudflared
-```
-
-Current ingress rules:
-```yaml
-tunnel: 7de784ee-bd93-415d-ba8a-f83cede98f50
-credentials-file: /root/.cloudflared/7de784ee-bd93-415d-ba8a-f83cede98f50.json
-
-ingress:
-  - hostname: server.clubpro.com.ar
-    service: http://localhost:3000
-  - hostname: admin.clubpro.com.ar
-    service: http://localhost:80
-  - hostname: api.clubpro.com.ar
-    service: http://localhost:8000
-  - hostname: clubpro.com.ar
-    service: http://localhost:80
-  - hostname: www.clubpro.com.ar
-    service: http://localhost:80
-  - service: http_status:404
-```
-
-### Backend env vars (Dokploy)
-
-```
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://api.clubpro.com.ar
-APP_KEY=<generated>
-FRONTEND_URL=https://admin.clubpro.com.ar
-SANCTUM_STATEFUL_DOMAINS=admin.clubpro.com.ar
-SESSION_DOMAIN=.clubpro.com.ar
-DB_CONNECTION=sqlite
-DB_DATABASE=/var/www/storage/db/database.sqlite
-LOG_CHANNEL=stderr
-LOG_LEVEL=error
-```
-
-### Redeploy manually
-
-```bash
-cd /etc/dokploy/compose/courtmanage-front-hvreht/code
-git pull
-docker compose -f docker-compose.prod.yml build --no-cache frontend
-docker compose -f docker-compose.prod.yml up -d frontend
-```
+**Backend (Render)**: lives in `backend/` (`Dockerfile` + `docker-entrypoint.sh`, which runs migrations on start and seeds on first run). Service settings and env vars live in the Render dashboard. `FRONTEND_URL` must be `https://tus-canchas-padel.vercel.app`, because CORS only allows that origin.
 
 ### Known gotchas
 
-- **Docker volume and migrations**: The SQLite volume is mounted at `sqlite_data:/var/www/storage/db`. **Never** mount it at `/var/www/database` — that path contains `migrations/` and `seeders/`, and a named volume would shadow those directories, making `php artisan migrate` silently find no new files. The entrypoint handles a one-time copy of `database/database.sqlite` → `storage/db/database.sqlite` if upgrading from the old layout.
+- **Link preview**: the `og:` tags in `src/index.html` use absolute URLs; update them if the frontend URL changes.
 
-- **Seeder idempotency**: `ReservationSeeder` uses raw `insert` and is not safe to re-run. The entrypoint writes a `.seeded` flag to `storage/db/` after the first successful seed. If you need to reset: delete the flag, drop/recreate the SQLite file.
+- **Missing files return the app**: a nonexistent path such as `/missing.jpg` answers 200 with `index.html`, so check the `content-type` when verifying a static file.
 
-- **Storage dirs**: On first deploy the entrypoint (`docker-entrypoint.sh`) handles `mkdir -p storage/db` and `touch storage/db/database.sqlite`. If the container fails to start, run:
-  ```bash
-  BACKEND=$(docker ps --filter "name=backend" -q)
-  docker exec $BACKEND sh -c "mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache && chmod -R 775 storage bootstrap/cache"
-  ```
+- **Seeder idempotency**: `ReservationSeeder` uses raw `insert` and is not safe to re-run. The entrypoint writes a `.seeded` flag to `storage/db/` after the first successful seed.
 
-- **Missing `business_account_id` on existing reservations**: After the multi-tenancy migration, existing rows have `business_account_id = NULL` and won't appear in API responses. Fix with:
-  ```bash
-  docker exec $BACKEND php artisan tinker --execute="App\Models\Reservation::whereNull('business_account_id')->update(['business_account_id' => 1]);"
-  ```
-
-- **CORS**: `backend/config/cors.php` has `allowed_origins: ['*']` — open for dev. Restrict to `https://admin.clubpro.com.ar` for hardened production.
-
-- **Database backups**: SQLite lives in Docker volume `sqlite_data`. No backup strategy is configured yet — `docker compose down -v` would destroy all data.
+- **SQLite persistence**: the database is a file inside the backend's `storage/db/`. Unless the Render service has a persistent disk mounted there, data is lost on redeploy or restart.
